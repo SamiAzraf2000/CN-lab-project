@@ -1,0 +1,117 @@
+# Zero Trust Enterprise Network
+
+## Project overview
+
+This Computer Network Lab project models a segmented enterprise network in Cisco Packet Tracer 9.0.1.0858. Its goal is to demonstrate department-level network separation, automatic IP addressing, centralized identity services, and controlled access between internal, DMZ, and Outside networks.
+
+The project uses VLANs to separate departments. VTP will distribute VLAN definitions across the internal switches, and DHCP will assign addresses to client PCs. Security controls and attack demonstrations will be added after the network foundation is working.
+
+## Project size and departments
+
+The target design has at least 70 PCs: 68 internal PCs and 3 Outside test PCs.
+
+| Department or network | VLAN | Subnet | Default gateway | Planned PCs |
+|---|---:|---|---|---:|
+| Users | 10 | 10.10.10.0/24 | 10.10.10.1 | 9 |
+| Finance | 11 | 10.10.11.0/24 | 10.10.11.1 | 3 |
+| HR | 12 | 10.10.12.0/24 | 10.10.12.1 | 4 |
+| Engineering | 13 | 10.10.13.0/24 | 10.10.13.1 | 2 |
+| Research | 14 | 10.10.14.0/24 | 10.10.14.1 | 8 |
+| Operations | 15 | 10.10.15.0/24 | 10.10.15.1 | 8 |
+| Marketing | 16 | 10.10.16.0/24 | 10.10.16.1 | 8 |
+| Support | 17 | 10.10.17.0/24 | 10.10.17.1 | 8 |
+| Logistics | 18 | 10.10.18.0/24 | 10.10.18.1 | 8 |
+| Training | 19 | 10.10.19.0/24 | 10.10.19.1 | 8 |
+| Servers | 20 | 10.10.20.0/24 | 10.10.20.1 | 3 servers |
+| Management | 99 | 10.10.99.0/24 | 10.10.99.1 | 2 |
+| Outside test network | Separate network | Planned: 198.51.100.0/24 | Planned: 198.51.100.1 | 3 |
+| DMZ | Separate network | Planned: 172.16.50.0/24 | Planned: 172.16.50.1 | 1 server |
+
+PCs will use DHCP. Network-device interfaces and servers will use static addresses.
+
+## Main devices
+
+- ISP: Cisco 2911 router simulating the Internet/Outside network
+- ASA1: Cisco ASA 5506-X firewall
+- CORE: Cisco 3560-24PS multilayer switch providing internal VLAN gateways and routing
+- ACC1–ACC9: Cisco 2960 internal access switches
+- Outside-SW: Cisco 2960 switch for the three Outside test PCs; kept separate from the internal VTP domain
+- AAA-Server: planned RADIUS/AAA server
+- Web-Internal: planned internal web server
+- DMZ-Web: planned DMZ web server
+
+The internal access switches connect to CORE. Department PCs connect to their assigned access switch. The Outside PCs connect to Outside-SW. The ASA separates the internal network, DMZ, and Outside network.
+
+## Planned network services and security controls
+
+1. VTP: CORE will be the VTP server. Internal access switches will be VTP clients in domain ZT-LAB. The Outside switch is excluded. Trunk links must be configured between CORE and the internal access switches for VTP advertisements and VLAN traffic.
+2. DHCP: CORE will provide a separate DHCP pool for each internal client VLAN. The ISP router will provide a separate pool for the Outside test PCs.
+3. Inter-VLAN routing: CORE will provide a gateway interface for each internal VLAN.
+4. AAA/RADIUS and 802.1X: The AAA server will authenticate selected endpoint users through the access switches.
+5. ACLs: ACLs will restrict lateral movement and limit access to servers and management devices.
+6. ASA firewall: The ASA will separate Inside, DMZ, and Outside traffic and allow only intended services to the DMZ.
+7. Testing: The demonstration will include successful authorized access and failed unauthorized or prohibited access.
+
+## Current progress
+
+### Completed
+
+- Created the Packet Tracer topology and saved the project.
+- Placed and named the router, ASA, core switch, access switches, and three servers.
+- Added department PCs and used colored shapes and labels to distinguish network groups.
+- Connected the devices with cables.
+- Configured CORE with VTP domain ZT-LAB, password ZTnet2026, and server mode.
+- Configured the internal access switches as VTP clients using the same domain and password.
+
+### Not configured yet
+
+- VLANs have not yet been created.
+- Trunk links have not yet been configured or verified.
+- Department access ports have not yet been assigned to VLANs.
+- VLAN gateway interfaces and routing have not yet been configured.
+- DHCP pools have not yet been configured.
+- PC DHCP settings and server addressing have not yet been configured.
+- ASA routing, NAT, and firewall rules have not yet been configured.
+- AAA/RADIUS, 802.1X, and ACLs have not yet been configured.
+- Connectivity and security tests have not yet been run.
+
+The VTP and DHCP configuration steps are planned; they should not be considered complete until verified on the devices.
+
+## Team work split
+
+### Member 1: network foundation
+
+- Maintain the topology, department/VLAN plan, and address plan.
+- Configure VTP and trunk links.
+- Create VLANs and assign switch ports.
+- Configure CORE gateway interfaces and basic routing.
+- Configure DHCP pools and set PCs to obtain addresses automatically.
+- Configure baseline ISP/ASA connectivity and test basic network reachability.
+- Save a working handoff Packet Tracer file and document any port assignments.
+
+### Member 2: security and demonstration
+
+- Continue from the saved handoff file.
+- Configure AAA/RADIUS and 802.1X.
+- Configure the ASA security policy and NAT as required.
+- Apply ACLs for department isolation and controlled server/management access.
+- Run authorized-access, denied-access, and lateral-movement tests.
+- Capture screenshots and prepare the security demonstration/report.
+
+## Validation plan
+
+Before the handoff, verify:
+
+- VTP domain and mode on CORE and each internal access switch.
+- VLANs exist on all internal switches after trunk links are configured.
+- Each PC receives an address from the correct DHCP subnet.
+- Each PC can reach its own VLAN gateway.
+- Basic server and inter-VLAN paths work before security rules are applied.
+
+After the security work, verify:
+
+- Authorized users can authenticate.
+- Unauthorized devices or incorrect credentials are denied.
+- Department-to-department lateral traffic is blocked as designed.
+- Only approved services can reach internal and DMZ servers.
+- Outside users can reach only the published DMZ service.
