@@ -198,7 +198,6 @@ object network INSIDE_NET
 ! Explicit Identity NAT Exemptions
 nat (inside,outside) source static INSIDE_NET INSIDE_NET destination static BRANCH_A_NET BRANCH_A_NET
 nat (inside,outside) source static INSIDE_NET INSIDE_NET destination static BRANCH_B_NET BRANCH_B_NET
-```
 
 ### 3. Verification commands
 
@@ -208,3 +207,59 @@ To re-verify the active state of the build at any time:
 - **ASA NAT Rules & Hit Counts:** `show running-config nat`
 - **ASA Access List Verification:** `show access-list`
 - **Core Switch Routing:** `show ip route`
+=======
+3. Verification CommandsTo re-verify the active state of the build at any time:ASA Route Table: show routeASA NAT Rules & Hit Counts: show running-config natASA Access List Verification: show access-listCore Switch Routing: show ip route
+
+
+
+
+
+
+last:
+What we fixed this session
+1. Branch → HQ (broken → working)
+Problem	Fix
+ISP had no routes back to branches (you’d deleted them)	ip route 10.10.30.0/24 → 203.0.113.18 and 10.10.40.0/24 → 203.0.113.19
+ASA OUTSIDE_IN missing ICMP for branches	Added permit icmp 10.10.30/40.0 → 10.10.20.20
+Junk NAT/ACL (CORP_NET empty, TEST PAT, orphan NO_NAT/NO_PAT)	Removed
+Result: Branch PCs → http://10.10.20.20 ✓
+2. Outside → DMZ (broken → working)
+Problem	Fix
+ISP had no route to DMZ	ip route 172.16.50.0/24 → 203.0.113.2
+ACL didn’t allow 198.51.100.0/24 or public IP	Added icmp/tcp permits for Outside → DMZ / 203.0.113.3
+Static NAT makes Outside use public IP only	Demo with http://203.0.113.3 (not 172.16.50.10)
+Result: Outside PCs → http://203.0.113.3 ✓, still blocked from internal ✓
+3. HQ/Branch → DMZ (broken → working)
+Problem	Fix
+Branch replies source-NATted to .3 → branch drops them	Branches use http://203.0.113.3 too
+DMZ_IN deny ate DMZ→Inside replies	Removed deny; later added permit DMZ→Inside only
+Gig1/2 link went down	no shutdown + re-check cable
+Server gateway typo during testing (176 vs 172)	Confirmed 172.16.50.1
+Result: HQ → http://172.16.50.10 ✓ · Branch → http://203.0.113.3 ✓
+What your setup can demonstrate
+Routing & addressing
+- VLAN segmentation across 10+ HQ departments (VLAN 10–20, 99) via 3560 CORE
+- VTP domain ZT-LAB distributing VLANs to access switches
+- DHCP per-department pools; PCs auto-addressed
+- Inter-VLAN routing on CORE + static routes to branches via ASA
+- Site-to-site path: Branch A/B (VLAN 30/40) ↔ ISP ↔ ASA ↔ HQ
+Firewall zones (ASA 5506-X)
+Zone	Sec	Who can reach what
+Inside (10.10.0.0/16)	100	Full access out; hosts servers
+DMZ (172.16.50.0/24)	50	Published web only
+Outside (203.0.113.0/29 + 198.51.100.0/24)	0	Only 203.0.113.3 (DMZ web)
+Security policies you can demo
+1. Zone isolation — Outside cannot touch 10.10.x internal PCs/servers (implicit deny)
+2. Published service only — Outside hits DMZ via static NAT 172.16.50.10 ↔ 203.0.113.3
+3. Branch controlled access — Branches reach HQ server 10.10.20.20 (www) via explicit ACL
+4. NAT/PAT concepts — static NAT for servers; identity for private-to-private branch traffic
+5. Department separation — different subnets/VLANs; ready for inter-VLAN ACLs (lateral-movement blocking)
+6. Attack demos (planned) — Outside test PCs 198.51.100.x for unauthorized-access attempts vs authorized paths
+Ready for Member 2 work (per your README)
+- RADIUS/AAA + 802.1X
+- Inter-department ACLs on CORE
+- Logging/screenshots of permit vs deny (show access-list hit counts)
+- Branch-to-HQ secure connectivity tests
+One-line architecture
+ISP ↔ ASA (inside/dmz/outside) ↔ CORE (VLANs+DHCP) ↔ dept switches — with branches behind ISP, DMZ web published at 203.0.113.3, internal server at 10.10.20.20 reachable only from branches (not Outside).
+Save the file now: File → Save As → cn lab project_working.pkt
